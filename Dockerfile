@@ -6,7 +6,6 @@
 # docker run -p 5601:5601 -p 9200:9200 -p 5044:5044 -it --name elk <repo-user>/elk
 
 FROM phusion/baseimage
-MAINTAINER Sebastien Pujadas http://pujadas.net
 ENV REFRESHED_AT 2017-01-13
 ###############################################################################
 #INSTALLATION ###############################################################################
@@ -41,7 +40,8 @@ ENV ELK_VERSION 6.2.1
 ENV ES_VERSION ${ELK_VERSION}
 ENV ES_HOME /opt/elasticsearch
 ENV ES_PACKAGE elasticsearch-${ES_VERSION}.tar.gz
-ENV ES_GID 991 ENV ES_UID 991
+ENV ES_GID 991
+ENV ES_UID 991
 ENV ES_PATH_CONF /etc/elasticsearch
 
 RUN mkdir ${ES_HOME} \
