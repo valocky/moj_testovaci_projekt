@@ -1,20 +1,25 @@
-# Dockerfile for ELK stack # Elasticsearch, Logstash, Kibana 6.2.1
-# !!!!!!!TOOK FROM sebp/elk !!!!!!!
+# Dockerfile for ELK stack
+# Elasticsearch, Logstash, Kibana 6.2.1
+# Taken FROM sebp/elk !
 # Build with:
 # docker build -t <repo-user>/elk .
+
 # Run with:
 # docker run -p 5601:5601 -p 9200:9200 -p 5044:5044 -it --name elk <repo-user>/elk
 
 FROM phusion/baseimage
 ENV REFRESHED_AT 2017-01-13
+
+
 ###############################################################################
-#INSTALLATION ###############################################################################
-###install prerequisites (cURL, gosu, JDK, tzdata)
+#                                INSTALLATION
+###############################################################################
+
+### install prerequisites (cURL, gosu, JDK, tzdata)
 
 ENV GOSU_VERSION 1.10
 
 ARG DEBIAN_FRONTEND=noninteractive
-
 RUN set -x \
  && apt-get update -qq \
  && apt-get install -qqy --no-install-recommends ca-certificates curl \
@@ -57,6 +62,7 @@ ADD ./elasticsearch-init /etc/init.d/elasticsearch
 RUN sed -i -e 's#^ES_HOME=$#ES_HOME='$ES_HOME'#' /etc/init.d/elasticsearch \
  && chmod +x /etc/init.d/elasticsearch
 
+
 ### install Logstash
 
 ENV LOGSTASH_VERSION ${ELK_VERSION}
@@ -80,6 +86,7 @@ ADD ./logstash-init /etc/init.d/logstash
 RUN sed -i -e 's#^LS_HOME=$#LS_HOME='$LOGSTASH_HOME'#' /etc/init.d/logstash \
  && chmod +x /etc/init.d/logstash
 
+
 ### install Kibana
 
 ENV KIBANA_VERSION ${ELK_VERSION}
@@ -101,8 +108,11 @@ ADD ./kibana-init /etc/init.d/kibana
 RUN sed -i -e 's#^KIBANA_HOME=$#KIBANA_HOME='$KIBANA_HOME'#' /etc/init.d/kibana \
  && chmod +x /etc/init.d/kibana
 
+
 ###############################################################################
-#CONFIGURATION ###############################################################################
+#                               CONFIGURATION
+###############################################################################
+
 ### configure Elasticsearch
 
 ADD ./elasticsearch.yml ${ES_PATH_CONF}/elasticsearch.yml
@@ -113,10 +123,9 @@ RUN cp ${ES_HOME}/config/log4j2.properties ${ES_HOME}/config/jvm.options \
  && chmod -R +r ${ES_PATH_CONF}
 
 ### configure Logstash
+
 # certs/keys for Beats and Lumberjack input
-
 RUN mkdir -p /etc/pki/tls/certs && mkdir /etc/pki/tls/private
-
 ADD ./logstash-beats.crt /etc/pki/tls/certs/logstash-beats.crt
 ADD ./logstash-beats.key /etc/pki/tls/private/logstash-beats.key
 
@@ -131,10 +140,10 @@ ADD ./nginx.pattern ${LOGSTASH_HOME}/patterns/nginx
 RUN chown -R logstash:logstash ${LOGSTASH_HOME}/patterns
 
 # Fix permissions
-
 RUN chmod -R +r ${LOGSTASH_PATH_CONF}
 
 ### configure logrotate
+
 ADD ./elasticsearch-logrotate /etc/logrotate.d/elasticsearch
 ADD ./logstash-logrotate /etc/logrotate.d/logstash
 ADD ./kibana-logrotate /etc/logrotate.d/kibana
@@ -142,17 +151,22 @@ RUN chmod 644 /etc/logrotate.d/elasticsearch \
  && chmod 644 /etc/logrotate.d/logstash \
  && chmod 644 /etc/logrotate.d/kibana
 
+
 ### configure Kibana
 
 ADD ./kibana.yml ${KIBANA_HOME}/config/kibana.yml
 
-# modify virtual memory
 RUN sysctl -w vm.max_map_count=262144
-###############################################################################
-#START ###############################################################################
 
+###############################################################################
+#                                   START
+###############################################################################
 
 ADD ./start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
-EXPOSE 5601 9200 9300 5044 VOLUME /var/lib/elasticsearch
+
+EXPOSE 5601 9200 9300 5044
+VOLUME /var/lib/elasticsearch
+
 CMD [ "/usr/local/bin/start.sh" ]
+
